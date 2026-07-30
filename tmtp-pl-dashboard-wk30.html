@@ -42,6 +42,33 @@ tr:hover td{background:rgba(255,98,0,.04)}
 </style>
 </head>
 <body>
+<div id="tmtpGate" style="position:fixed;inset:0;z-index:99999;background:#F5F3EF;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI','Microsoft JhengHei',sans-serif">
+  <form id="tmtpGateForm" style="background:#fff;border:1px solid #E7E6E6;border-radius:16px;padding:34px 30px;width:100%;max-width:380px;box-shadow:0 10px 30px rgba(0,0,0,.10);text-align:center">
+    <div style="font-size:38px;margin-bottom:10px">&#128202;</div>
+    <div style="font-size:20px;font-weight:800;color:#161D26">TMTP 6.0 Dashboard</div>
+    <div style="font-size:12px;color:#888;margin:6px 0 18px">Enter password to access the dashboard</div>
+    <input id="tmtpGatePw" type="password" placeholder="Password" autocomplete="current-password"
+      style="width:100%;padding:11px 14px;border:1px solid #E7E6E6;border-radius:9px;font-size:14px;outline:none;margin-bottom:10px">
+    <div id="tmtpGateErr" style="color:#C0392B;font-size:12px;min-height:16px;margin-bottom:8px;text-align:left"></div>
+    <button type="submit" style="width:100%;background:#FF6200;color:#fff;border:none;padding:11px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer">Login</button>
+  </form>
+</div>
+<script>
+(function(){
+  var HASH="ae4ef0a0d0a7a399be5349f72ff3a8b39f4180e8ef725b5dd49bd14e38f96d58", KEY="tmtp_auth";
+  var g=document.getElementById("tmtpGate");
+  function open(){ if(g&&g.parentNode) g.parentNode.removeChild(g); document.body.style.overflow=""; }
+  async function h(s){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("");}
+  if(localStorage.getItem(KEY)===HASH){ open(); return; }
+  document.body.style.overflow="hidden";
+  document.getElementById("tmtpGateForm").addEventListener("submit",async function(e){
+    e.preventDefault();
+    if(await h(document.getElementById("tmtpGatePw").value)===HASH){ localStorage.setItem(KEY,HASH); open(); }
+    else document.getElementById("tmtpGateErr").textContent="Incorrect password.";
+  });
+})();
+</script>
+
 <div class="container">
 <h1>🎯 TMTP 6.0 - PL &amp; Feature Adoption Dashboard</h1>
 <p class="sub">Source: P0_20260725.xlsx (WK30) | TMTP Sellers Only | Filterable</p>
