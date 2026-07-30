@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TMTP 6.0 Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','Microsoft JhengHei',sans-serif;background:#F5F3EF;color:#171717;padding:24px 16px;font-size:14px}
+.container{max-width:1080px;margin:0 auto}
+.header{background:linear-gradient(135deg,#161D26 0%,#2b3a4f 55%,#FF6200 165%);border-radius:14px;padding:30px 32px;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.12);text-align:center}
+.header h1{font-size:26px;font-weight:800;letter-spacing:.2px}
+.header p{font-size:13px;opacity:.85;margin-top:6px}
+.panel{background:#fff;border:1px solid #E7E6E6;border-radius:14px;padding:22px 24px;margin-top:22px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.panel h2{font-size:17px;color:#161D26;padding-bottom:12px;margin-bottom:18px;border-bottom:2px solid #FF6200;display:inline-block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.card{border:1px solid #E7E6E6;border-left:4px solid #FF6200;border-radius:10px;padding:18px 18px 20px;background:#fff;transition:box-shadow .15s,transform .15s}
+.card:hover{box-shadow:0 6px 18px rgba(255,98,0,.14);transform:translateY(-2px)}
+.card .wk{font-size:18px;font-weight:800;color:#171717}
+.card .yr{font-size:12px;color:#888;font-weight:600}
+.badge{display:inline-block;background:rgba(13,122,63,.12);color:#0D7A3F;font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:5px;margin:8px 0}
+.spacer{height:8px}
+.btn{display:inline-block;background:rgba(255,98,0,.1);color:#FF6200;border:1px solid rgba(255,98,0,.28);font-size:13px;font-weight:700;padding:7px 16px;border-radius:7px;text-decoration:none;cursor:pointer;transition:background .15s,color .15s}
+.btn:hover{background:#FF6200;color:#fff}
+.state{color:#888;font-size:13px;padding:10px 2px}
+.footer{text-align:center;color:#999;font-size:12px;margin-top:24px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#0D7A3F;margin-right:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>&#128202; TMTP 6.0 Dashboard</h1>
+    <p>Weekly PL &amp; Feature Adoption Review &mdash; Fast Track (NA / EU / JP / AU / MENA / EM)</p>
+  </div>
+
+  <div class="panel">
+    <h2>All Available Reports</h2>
+    <div id="state" class="state">Loading weekly reports&hellip;</div>
+    <div id="grid" class="grid"></div>
+  </div>
+
+  <div class="footer"><span class="dot"></span>TMTP 6.0 &mdash; Updated Weekly</div>
+</div>
+
+<script>
+// ---- Config -------------------------------------------------------------
+// Weekly files are named:  tmtp-pl-dashboard-wk<NN>.html
+// Just upload a new weekly file into this folder — it appears automatically.
+const PREFIX = 'tmtp-pl-dashboard-wk';
+const YEAR   = 2026;
+const WEEK_MIN = 21;   // earliest week to look for
+const WEEK_MAX = 53;   // latest week to look for
+// ------------------------------------------------------------------------
+
+function fileFor(w){ return PREFIX + w + '.html'; }
+
+async function exists(url){
+  try{
+    let r = await fetch(url, {method:'HEAD'});
+    if(r.ok) return true;
+    // Some hosts don't answer HEAD — fall back to a lightweight GET.
+    if(r.status === 405 || r.status === 501){
+      r = await fetch(url, {method:'GET'});
+      return r.ok;
+    }
+    return false;
+  }catch(e){ return false; }
+}
+
+function card(w, isLatest){
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML =
+    '<div class="wk">W' + w + ' <span class="yr">' + YEAR + '</span></div>' +
+    (isLatest ? '<div class="badge">LATEST</div>' : '<div class="spacer"></div>') +
+    '<div><a class="btn" href="' + fileFor(w) + '">View Dashboard &rarr;</a></div>';
+  return div;
+}
+
+async function discover(){
+  const checks = [];
+  for(let w = WEEK_MAX; w >= WEEK_MIN; w--){
+    checks.push(exists(fileFor(w)).then(ok => ok ? w : null));
+  }
+  let weeks = (await Promise.all(checks)).filter(w => w !== null);
+  weeks.sort((a,b) => b - a);
+
+  const grid = document.getElementById('grid');
+  const state = document.getElementById('state');
+  grid.innerHTML = '';
+  if(weeks.length === 0){
+    state.textContent = 'No weekly reports found yet. Upload a file named ' + fileFor('NN') + ' into this folder.';
+    return;
+  }
+  state.style.display = 'none';
+  weeks.forEach((w, i) => grid.appendChild(card(w, i === 0)));
+}
+
+discover();
+</script>
+</body>
+</html>
