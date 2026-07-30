@@ -6,12 +6,29 @@
 <title>TMTP 6.0 Dashboard</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI','Microsoft JhengHei',sans-serif;background:#F5F3EF;color:#171717;padding:24px 16px;font-size:14px}
-.container{max-width:1080px;margin:0 auto}
+body{font-family:'Segoe UI','Microsoft JhengHei',sans-serif;background:#F5F3EF;color:#171717;font-size:14px}
+/* login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:#fff;border:1px solid #E7E6E6;border-radius:16px;padding:34px 30px;width:100%;max-width:380px;box-shadow:0 10px 30px rgba(0,0,0,.10);text-align:center}
+.login-card .logo{font-size:38px;margin-bottom:10px}
+.login-card h1{font-size:20px;font-weight:800;color:#161D26}
+.login-card .hint{font-size:12px;color:#888;margin:6px 0 18px}
+.pw-row{position:relative;margin-bottom:10px}
+.pw-row input{width:100%;padding:11px 40px 11px 14px;border:1px solid #E7E6E6;border-radius:9px;font-size:14px;outline:none}
+.pw-row input:focus{border-color:#FF6200;box-shadow:0 0 0 3px rgba(255,98,0,.12)}
+.eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;opacity:.55}
+.err{color:#C0392B;font-size:12px;min-height:16px;margin-bottom:8px;text-align:left}
+.login-btn{width:100%;background:#FF6200;color:#fff;border:none;padding:11px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s}
+.login-btn:hover{background:#e65800}
+/* portal */
+.container{max-width:1080px;margin:0 auto;padding:24px 16px}
 .header{background:linear-gradient(135deg,#161D26 0%,#2b3a4f 55%,#FF6200 165%);border-radius:14px;padding:30px 32px;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.12);text-align:center}
-.header h1{font-size:26px;font-weight:800;letter-spacing:.2px}
+.header h1{font-size:26px;font-weight:800}
 .header p{font-size:13px;opacity:.85;margin-top:6px}
-.panel{background:#fff;border:1px solid #E7E6E6;border-radius:14px;padding:22px 24px;margin-top:22px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.topbar{max-width:1080px;margin:0 auto;padding:0 16px;display:flex;justify-content:flex-end}
+.logout{background:none;border:none;color:#888;font-size:12px;cursor:pointer;margin-top:10px}
+.logout:hover{color:#FF6200}
+.panel{background:#fff;border:1px solid #E7E6E6;border-radius:14px;padding:22px 24px;margin-top:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
 .panel h2{font-size:17px;color:#161D26;padding-bottom:12px;margin-bottom:18px;border-bottom:2px solid #FF6200;display:inline-block}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 .card{border:1px solid #E7E6E6;border-left:4px solid #FF6200;border-radius:10px;padding:18px 18px 20px;background:#fff;transition:box-shadow .15s,transform .15s}
@@ -28,76 +45,90 @@ body{font-family:'Segoe UI','Microsoft JhengHei',sans-serif;background:#F5F3EF;c
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>&#128202; TMTP 6.0 Dashboard</h1>
-    <p>Weekly PL &amp; Feature Adoption Review &mdash; Fast Track (NA / EU / JP / AU / MENA / EM)</p>
-  </div>
 
-  <div class="panel">
-    <h2>All Available Reports</h2>
-    <div id="state" class="state">Loading weekly reports&hellip;</div>
-    <div id="grid" class="grid"></div>
-  </div>
+<div id="login" class="login-wrap">
+  <form class="login-card" id="loginForm">
+    <div class="logo">&#128202;</div>
+    <h1>TMTP 6.0 Dashboard</h1>
+    <p class="hint">Enter password to access the dashboard</p>
+    <div class="pw-row">
+      <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+      <button type="button" id="eye" class="eye" title="show/hide">&#128065;</button>
+    </div>
+    <div id="err" class="err"></div>
+    <button type="submit" class="login-btn">Login</button>
+  </form>
+</div>
 
-  <div class="footer"><span class="dot"></span>TMTP 6.0 &mdash; Updated Weekly</div>
+<div id="portal" style="display:none">
+  <div class="container">
+    <div class="header">
+      <h1>&#128202; TMTP 6.0 Dashboard</h1>
+      <p>Weekly PL &amp; Feature Adoption Review &mdash; Fast Track (NA / EU / JP / AU / MENA / EM)</p>
+    </div>
+    <div class="topbar"><button class="logout" id="logout">Log out</button></div>
+    <div class="panel">
+      <h2>All Available Reports</h2>
+      <div id="state" class="state">Loading weekly reports&hellip;</div>
+      <div id="grid" class="grid"></div>
+    </div>
+    <div class="footer"><span class="dot"></span>TMTP 6.0 &mdash; Updated Weekly</div>
+  </div>
 </div>
 
 <script>
-// ---- Config -------------------------------------------------------------
-// Weekly files are named:  tmtp-pl-dashboard-wk<NN>.html
-// Just upload a new weekly file into this folder — it appears automatically.
-const PREFIX = 'tmtp-pl-dashboard-wk';
-const YEAR   = 2026;
-const WEEK_MIN = 21;   // earliest week to look for
-const WEEK_MAX = 53;   // latest week to look for
-// ------------------------------------------------------------------------
+const HASH = "ae4ef0a0d0a7a399be5349f72ff3a8b39f4180e8ef725b5dd49bd14e38f96d58";
+const AUTH_KEY = "tmtp_auth";
+const PREFIX = "tmtp-pl-dashboard-wk";
+const YEAR = 2026, WEEK_MIN = 21, WEEK_MAX = 53;
 
-function fileFor(w){ return PREFIX + w + '.html'; }
-
+async function sha256hex(s){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function fileFor(w){ return PREFIX + w + ".html"; }
 async function exists(url){
-  try{
-    let r = await fetch(url, {method:'HEAD'});
+  try{ let r = await fetch(url,{method:"HEAD"});
     if(r.ok) return true;
-    // Some hosts don't answer HEAD — fall back to a lightweight GET.
-    if(r.status === 405 || r.status === 501){
-      r = await fetch(url, {method:'GET'});
-      return r.ok;
-    }
+    if(r.status===405||r.status===501){ r = await fetch(url,{method:"GET"}); return r.ok; }
     return false;
   }catch(e){ return false; }
 }
-
-function card(w, isLatest){
-  const div = document.createElement('div');
-  div.className = 'card';
-  div.innerHTML =
-    '<div class="wk">W' + w + ' <span class="yr">' + YEAR + '</span></div>' +
-    (isLatest ? '<div class="badge">LATEST</div>' : '<div class="spacer"></div>') +
-    '<div><a class="btn" href="' + fileFor(w) + '">View Dashboard &rarr;</a></div>';
-  return div;
+function card(w,isLatest){
+  const d=document.createElement("div"); d.className="card";
+  d.innerHTML='<div class="wk">W'+w+' <span class="yr">'+YEAR+'</span></div>'+
+    (isLatest?'<div class="badge">LATEST</div>':'<div class="spacer"></div>')+
+    '<div><a class="btn" href="'+fileFor(w)+'">View Dashboard &rarr;</a></div>';
+  return d;
 }
-
 async function discover(){
-  const checks = [];
-  for(let w = WEEK_MAX; w >= WEEK_MIN; w--){
-    checks.push(exists(fileFor(w)).then(ok => ok ? w : null));
-  }
-  let weeks = (await Promise.all(checks)).filter(w => w !== null);
-  weeks.sort((a,b) => b - a);
-
-  const grid = document.getElementById('grid');
-  const state = document.getElementById('state');
-  grid.innerHTML = '';
-  if(weeks.length === 0){
-    state.textContent = 'No weekly reports found yet. Upload a file named ' + fileFor('NN') + ' into this folder.';
-    return;
-  }
-  state.style.display = 'none';
-  weeks.forEach((w, i) => grid.appendChild(card(w, i === 0)));
+  const checks=[];
+  for(let w=WEEK_MAX; w>=WEEK_MIN; w--) checks.push(exists(fileFor(w)).then(ok=>ok?w:null));
+  let weeks=(await Promise.all(checks)).filter(w=>w!==null); weeks.sort((a,b)=>b-a);
+  const grid=document.getElementById("grid"), state=document.getElementById("state");
+  grid.innerHTML="";
+  if(weeks.length===0){ state.textContent="No weekly reports found yet."; return; }
+  state.style.display="none";
+  weeks.forEach((w,i)=>grid.appendChild(card(w,i===0)));
 }
-
-discover();
+function showPortal(){
+  document.getElementById("login").style.display="none";
+  document.getElementById("portal").style.display="block";
+  discover();
+}
+document.getElementById("eye").addEventListener("click",()=>{
+  const p=document.getElementById("pw"); p.type = p.type==="password" ? "text":"password";
+});
+document.getElementById("logout").addEventListener("click",()=>{
+  localStorage.removeItem(AUTH_KEY); location.reload();
+});
+document.getElementById("loginForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const h = await sha256hex(document.getElementById("pw").value);
+  if(h===HASH){ localStorage.setItem(AUTH_KEY,HASH); showPortal(); }
+  else{ document.getElementById("err").textContent="Incorrect password."; }
+});
+if(localStorage.getItem(AUTH_KEY)===HASH) showPortal();
 </script>
 </body>
 </html>
